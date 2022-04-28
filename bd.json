@@ -1,0 +1,16 @@
+{
+    "Developper": "Luidjy",
+    "licence": "MIT",
+    "Commande": [ {
+        "help": "Afficher les commandes du bot",
+        "role": "Pour la fenêtre des roles",
+        "bagarre": "Pour faire la baston !",
+        "Judas Priest": "Pour avoir des info sur les Judas Priest"
+
+    }],
+    "attaque": [{
+        "0": "donné un coup de poing à",
+        "1": "donné un coup de pied à", 
+        "2": "étranglé"
+       } ]
+}
