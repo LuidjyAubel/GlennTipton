@@ -12,7 +12,7 @@
 1. Execute in directory of project :
 >- node main.js
 
-8. In the shell of execution of project you can see :
+5. In the shell of execution of project you can see :
 >- Power
 
-10. Enjoy the software !
+6. Enjoy the software !
