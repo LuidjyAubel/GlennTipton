@@ -1,0 +1,21 @@
+{
+    "Developper": "Luidjy",
+    "licence": "MIT",
+    "Commande": [ {
+        "help": "Afficher les commandes du bot",
+        "info": "Des infos sur le bot",
+        "role": "Pour la fenêtre des roles",
+        "bagarre": "Pour faire la baston !",
+        "meler": "Pour une giga baston !",
+        "Judas Priest": "Pour avoir des info sur les Judas Priest",
+        "Glenn tipton": "Surprise !",
+        "kick": "Pour kick un utilisateur",
+        "ban": "Pour bannir un utilisateur"
+
+    }],
+    "attaque": [
+        "donné un coup de poing à ",
+        "donné un coup de pied à ", 
+         "à étranglé "
+        ]
+}
