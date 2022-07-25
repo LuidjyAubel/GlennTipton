@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const bot = new Discord.Client();
-const token = require("./token.json");
+//const token = require("./token.json");
 const bd = require("./bd.json");
 const Bienvenue_channel = "787990249322184728";
 
