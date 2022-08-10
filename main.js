@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const bot = new Discord.Client();
-const token = require("./token.json");
+//const token = require("./token.json");
 const bd = require("./bd.json");
 const Bienvenue_channel = "787990249322184728";
 
@@ -29,7 +29,7 @@ bot.on("message", async message =>{
         message.channel.send("Judas Priest est un Groupe de Heavy metal composé pour sa formation la plus iconnique de : \n"+"Rob Halford \n"+"Glenn Tipton \n"+"K K Downing \n"+"Ian Hill \n"+"Scott Travis")
     }
     if(message.content === prefix + "SPAM"){
-        message.channel.send(`ARRETE DE SPAM FILS DE PUTE DE TES MORT, C'EST UNE HONTE !`)
+        message.channel.send(`ARRETE DE SPAM, C'EST UNE HONTE !`)
     }
     if(message.content === prefix + "bagarre"){
         message.channel.send(`La BAGARRE !`)
