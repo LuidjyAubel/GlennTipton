@@ -1,5 +1,5 @@
 # Glenn Tipton BOT
-![Logo de Jougle](https://cdn.discordapp.com/avatars/787997124788092968/def716fe61de2d19247c03d0a1635d28.png)
+![Logo du bot](https://cdn.discordapp.com/avatars/787997124788092968/def716fe61de2d19247c03d0a1635d28.png)
 
 This one was created for the discord server Co-Music, feactures of the bot was created and deploy for this use. You can use this one for create your own bot
 
