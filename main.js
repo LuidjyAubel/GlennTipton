@@ -200,7 +200,7 @@ bot.on("message", async message => {
             ++msgCOunt;
             if (parseInt(msgCOunt) === LIMIT) {
                 message.channel.send(`Attention, ${message.author} ! les dieux de la musique sont en colère ! (Vous avez étais mute !)`);
-                const MUTE = message.guild.roles.cache.get("1009141321405055086");
+                const MUTE = message.guild.roles.cache.get("1009165122842919083");
                 message.member.roles.add(MUTE);
                 setTimeout(() => {
                     message.member.roles.remove(MUTE);
