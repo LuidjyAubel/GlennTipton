@@ -1,20 +1,22 @@
 const Discord = require('discord.js');
 const bot = new Discord.Client();
-//const token = require("./token.json");      //provisoire
+const token = require("./token.json");      //provisoire
 const bd = require("./bd.json");
+const DOMParser = require('dom-parser');
 const Bienvenue_channel = "787990249322184728";
 
 bot.on("ready", async () => {
     console.log("Power");
     bot.user.setStatus("online");
     bot.user.setActivity("Composer de la musique");
+    console.log("Developpeur : "+bd.Developper);
 });
 bot.on("guildMemberAdd", member => {
     bot.channels.cache.get(Bienvenue_channel).send(`Bienvenue à toi sur le serveur ${member} !`);
     member.roles.add("788868643407659008");
 });
 
-let prefix = "-"
+let prefix = "-";
 bot.on("message", async message => {
     if (message.content === "Glenn Tipton") {
         message.channel.send("A fucking guitar hero")
@@ -25,8 +27,21 @@ bot.on("message", async message => {
     if (message.content === prefix + "Instrument") {
         message.channel.send('La guitare est le meilleur instrument')
     }
-    if (message.content === prefix + "Judas Priest") {
-        message.channel.send("Judas Priest est un Groupe de Heavy metal composé pour sa formation la plus iconnique de : \n" + "Rob Halford \n" + "Glenn Tipton \n" + "K K Downing \n" + "Ian Hill \n" + "Scott Travis")
+    if (message.content === prefix + "Actu") {
+        //message.channel.send("Judas Priest est un Groupe de Heavy metal composé pour sa formation la plus iconnique de : \n" + "Rob Halford \n" + "Glenn Tipton \n" + "K K Downing \n" + "Ian Hill \n" + "Scott Travis")
+        fetch("https://blabbermouth.net/feed")
+        .then(response => response.text())
+        .then(str => new DOMParser().parseFromString(str, "application/rss+xml"))
+        .then(data => {
+        const items = new Array();
+        for(var i = 0; i<10;i++){
+            items[i] = data.getElementsByTagName("title")[i].textContent.toString();
+        }
+        message.channel.send("Quelque actu ! ");
+        for(var j = 1; j<items.length;j++){
+            message.channel.send(items[j]);
+        }
+    })
     }
     if (message.content === prefix + "SPAM") {
         message.channel.send(`ARRETE DE SPAM, C'EST UNE HONTE !`)
@@ -99,23 +114,36 @@ bot.on("message", async message => {
         if (!member.bannable) {
             message.channel.send("Vous ne pouvez pas bannir l'utilisateur !");
         } else {
-            member.kick();
+            member.ban();
             message.channel.send("L'utilisateur [" + member.displayName + "] a étais banni !");
         }
     }
 });
 bot.on("message", async message => {
     if (message.content === prefix + "help") {
+        //const myObj = JSON.parse('{ "help": "Afficher les commandes du bot","info": "Des infos sur le bot","role": "Pour la fenêtre des roles","bagarre": "Pour faire la baston !","meler": "Pour une giga baston !","Judas Priest": "Pour avoir des info sur les Judas Priest","Glenn tipton": "Surprise !","kick": "Pour kick un utilisateur","ban": "Pour bannir un utilisateur"}');
+        //console.log(myObj);
         const exampleEmbed = new Discord.MessageEmbed()
-            .setTitle('Les commandes du bot :')
-            .setDescription('-help pour afficher ce message \n' + "-info pour afficher les info du bot \n" + "-Instrument pour savoir le meilleur instrument de musique \n" + "-role pour choisir un role \n" + "-Judas Priest pour avoir des info sur les Judas Priest \n" + "-kick pour kick un utilisateur \n" + "-ban pour ban un utilisateur \n" + "-bagarre pour faire une bagarre \n" + "-MELER pour faire une melé")
+            .setColor(0xFF0000)
+            .setTitle('Aide du bot')
+            .setDescription("Commande Utile du bot")
+            .setThumbnail(bd.image)
+            .addFields({ name: "help",value: bd.Commande.help, inline: true })
+            .addFields({ name: "info",value: bd.Commande.info, inline: true })
+            .addFields({ name: "role",value: bd.Commande.role, inline: true })
+            .addFields({ name: "bagarre",value: bd.Commande.bagarre, inline: true })
+            .addFields({ name: "meler",value: bd.Commande.meler, inline: true })
+            .addFields({ name: "kick",value: bd.Commande.kick, inline: true })
+            .addFields({ name: "ban", value: bd.Commande.ban, inline: true })
+            .addFields({ name: "Glenn tipton",value: bd.Commande['Glenn tipton'], inline: true })
+            .addFields({ name: "Actu",value: bd.Commande.Actu, inline: true })
+            .setTimestamp()
         message.channel.send(exampleEmbed);
     }
 });
 
 bot.on("message", async message => {
     if (message.content === prefix + "role") {
-        //VERIFIED
         if (message.author.bot) return false;
         const Role1 = message.guild.roles.cache.get("788801741511852042");
         const Role2 = message.guild.roles.cache.get("788801064815689769");
@@ -220,5 +248,5 @@ bot.on("message", async message => {
     }
 });
 
-//bot.login(token.token);
-bot.login(process.env.token);
+bot.login(token.token);
+//bot.login(process.env.token);
