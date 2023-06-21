@@ -10,6 +10,7 @@ bot.on("ready", async () => {
     bot.user.setStatus("online");
     bot.user.setActivity("Composer de la musique");
     console.log("Developpeur : "+bd.Developper);
+    console.log("Licence : "+bd.licence);
 });
 bot.on("guildMemberAdd", member => {
     bot.channels.cache.get(Bienvenue_channel).send(`Bienvenue à toi sur le serveur ${member} !`);
@@ -28,20 +29,38 @@ bot.on("message", async message => {
         message.channel.send('La guitare est le meilleur instrument')
     }
     if (message.content === prefix + "Actu") {
-        //message.channel.send("Judas Priest est un Groupe de Heavy metal composé pour sa formation la plus iconnique de : \n" + "Rob Halford \n" + "Glenn Tipton \n" + "K K Downing \n" + "Ian Hill \n" + "Scott Travis")
         fetch("https://blabbermouth.net/feed")
-        .then(response => response.text())
-        .then(str => new DOMParser().parseFromString(str, "application/rss+xml"))
-        .then(data => {
-        const items = new Array();
-        for(var i = 0; i<10;i++){
-            items[i] = data.getElementsByTagName("title")[i].textContent.toString();
-        }
-        message.channel.send("Quelque actu ! ");
-        for(var j = 1; j<items.length;j++){
-            message.channel.send(items[j]);
-        }
-    })
+  .then(response => response.text())
+  .then(str => new DOMParser().parseFromString(str, "application/rss+xml"))
+  .then(data => {
+    const items = [];
+    const links = {};
+
+    let linkElements = data.getElementsByTagName("guid");
+    let titleElements = data.getElementsByTagName("title");
+
+    for (let i = 0; i < 10; i++) {
+      let title = titleElements[i].textContent.toString().replace(/&#039;/g, "'");
+      let link = linkElements[i].textContent.toString();
+
+      items.push(title);
+      links[title] = link;
+
+      console.log(title + ": " + link);
+    }
+
+    message.channel.send("Quelques actualités !");
+
+    for (let j = 1; j < items.length; j++) {
+      let title = items[j];
+      let link = links[title];
+
+      if (link) {
+        message.channel.send(title);
+        message.channel.send(link);
+      }
+    }
+  });
     }
     if (message.content === prefix + "SPAM") {
         message.channel.send(`ARRETE DE SPAM, C'EST UNE HONTE !`)
@@ -54,7 +73,7 @@ bot.on("message", async message => {
     if (message.content.startsWith(prefix + "bagarre")) {
         const [first, second] = message.mentions.users.keyArray();
         let b = Math.floor(Math.random() * (2 + 1));
-        let c = Math.floor(Math.random() * (3));
+        let c = Math.floor(Math.random() * (5));
         if (!first || !second)
             return message.channel.send('Vous devez mentionner 2 utilisateurs différents !');
         message.channel.send(`La BAGARRE ! \n <@${first}> contre <@${second}> ça va faire mal !`);
@@ -72,7 +91,7 @@ bot.on("message", async message => {
     if (message.content.startsWith(prefix + "MELER")) {
         const [first, second, trois, quatre] = message.mentions.users.keyArray();
         let b = Math.floor(Math.random() * (4 + 1));
-        let c = Math.floor(Math.random() * (3));
+        let c = Math.floor(Math.random() * (5));
         if (!first || !second || !trois || !quatre)
             return message.channel.send('Vous devez mentionner 4 utilisateurs différents !');
         message.channel.send(`La BAGARRE EN FOLIE ! \n La mélé comprend <@${first}>, <@${second}>, <@${trois}> <@${quatre}> ça va faire mal !`);
