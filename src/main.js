@@ -1,7 +1,6 @@
 const Discord = require('discord.js');
 const bot = new Discord.Client();
-const token = require("./token.json");      //provisoire
-const bd = require("./bd.json");
+const bd = require("./data/bd.json");
 const DOMParser = require('dom-parser');
 const Bienvenue_channel = "787990249322184728";
 
@@ -267,5 +266,5 @@ bot.on("message", async message => {
     }
 });
 
-bot.login(token.token);
-//bot.login(process.env.token);
+//bot.login(token.token);
+bot.login(process.env.token);
