@@ -1,23 +1,131 @@
 const Discord = require('discord.js');
-const bot = new Discord.Client();
 const bd = require("./data/bd.json");
 const DOMParser = require('dom-parser');
+const tweetnacl = require('tweetnacl');
+const { Client, GatewayIntentBits, Partials, EmbedBuilder} = require('discord.js');
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildMessageReactions,
+      GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.DirectMessageReactions,
+      GatewayIntentBits.GuildMessageReactions,
+    ],
+    partials: [
+        Partials.Channel,
+        Partials.Message,
+        Partials.Reaction,
+        Partials.GuildMember,
+      ],
+  });
+const { createAudioPlayer, createAudioResource, joinVoiceChannel, getVoiceConnection, NoSubscriberBehavior } = require('@discordjs/voice');
+const ytdl = require('ytdl-core-discord');
+
 const Bienvenue_channel = "787990249322184728";
 
-bot.on("ready", async () => {
+client.on("ready", async () => {
     console.log("Power");
-    bot.user.setStatus("online");
-    bot.user.setActivity("Composer de la musique");
+    client.user.setPresence({ activities: [{ name: "Composer de la musique", type: "PLAYING" }], status: "online" });
     console.log("Developpeur : "+bd.Developper);
     console.log("Licence : "+bd.licence);
 });
-bot.on("guildMemberAdd", member => {
-    bot.channels.cache.get(Bienvenue_channel).send(`Bienvenue à toi sur le serveur ${member} !`);
-    member.roles.add("788868643407659008");
+
+client.on("error", console.error);
+client.on("warn", console.warn);
+
+client.on("guildMemberAdd", async (member) => {
+    console.log(`Nouveau membre rejoint : ${member.user.tag}`);
+
+    // Envoi du message de bienvenue
+    const bienvenueChannel = await member.guild.channels.fetch(Bienvenue_channel);
+    if (bienvenueChannel?.isText()) {
+        await bienvenueChannel.send(`Bienvenue à toi sur le serveur ${member} !`);
+    } else {
+        console.log("Canal de bienvenue introuvable ou non-textuel. Vérifie l'ID du canal.");
+    }
+
+    // Ajout du rôle
+    const roleToAdd = member.guild.roles.cache.get("788868643407659008");
+    if (roleToAdd) {
+        await member.roles.add(roleToAdd)
+            .then(() => console.log(`Rôle ajouté à ${member.user.tag}`))
+            .catch(error => console.error(`Erreur lors de l'ajout du rôle : ${error}`));
+    } else {
+        console.log("Rôle introuvable. Vérifie l'ID du rôle.");
+    }
 });
 
 let prefix = "-";
-bot.on("message", async message => {
+
+client.on('messageCreate', async (message) => {
+    if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
+
+    if (command === 'play') {
+        const member = message.guild.members.cache.get(message.author.id);
+        if (!member.voice.channel) {
+            return message.reply("Tu dois être dans un canal vocal pour utiliser cette commande !");
+        }
+
+        const connection = joinVoiceChannel({
+            channelId: member.voice.channel.id,
+            guildId: message.guild.id,
+            adapterCreator: message.guild.voiceAdapterCreator,
+        });
+
+        try {
+            console.log('Tentative de connexion au canal vocal');
+            
+            const connection1 = getVoiceConnection(message.guild.id);
+            
+            // Log du lien pour vérification
+            console.log('Lien YouTube:', args[0]);
+            
+            const stream = await ytdl(args[0]);
+            console.log("Extraction de l'audio réussie");
+          
+            const resource = createAudioResource(stream, { inputType: 'opus' });
+            console.log("Ressource audio créée");
+          
+            const player = createAudioPlayer({
+                behaviors: {
+                    noSubscriber: NoSubscriberBehavior.Pause,
+                },
+            });
+            console.log("Lecteur audio créé");
+          
+            player.play(resource);
+            console.log("Audio en cours de lecture");
+          
+            connection.subscribe(player);
+            console.log("Abonnement du lecteur à la connexion");
+        
+            // Gérer les changements d'état du lecteur
+            player.on('stateChange', (oldState, newState) => {
+                console.log(`Changement d'état du lecteur: ${oldState.status} -> ${newState.status}`);
+                if (newState.status === 'idle') {
+                    console.log('Le lecteur est maintenant inactif. Déconnexion.');
+                    connection.disconnect();
+                }
+            });
+        
+            // Gérer les erreurs du lecteur
+            player.on('error', (error) => {
+                console.error('Erreur du lecteur :', error);
+                connection.disconnect();
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'extraction de l\'audio de YouTube :', error);
+            connection.disconnect();
+        }
+    }
+});
+client.on("messageCreate", async (message) => {
     if (message.content === "Glenn Tipton") {
         message.channel.send("A fucking guitar hero")
     }
@@ -61,55 +169,52 @@ bot.on("message", async message => {
     }
   });
     }
-    if (message.content === prefix + "SPAM") {
-        message.channel.send(`ARRETE DE SPAM, C'EST UNE HONTE !`)
-    }
-    if (message.content === prefix + "bagarre") {
-        message.channel.send(`La BAGARRE !`)
-    }
 });
-bot.on("message", async message => {
+client.on("messageCreate", async (message) => {
     if (message.content.startsWith(prefix + "bagarre")) {
-        const [first, second] = message.mentions.users.keyArray();
+        const mentions = message.mentions.users;
+        const first = mentions.first();
+        const second = mentions.last();
         let b = Math.floor(Math.random() * (2 + 1));
         let c = Math.floor(Math.random() * (5));
         if (!first || !second)
             return message.channel.send('Vous devez mentionner 2 utilisateurs différents !');
-        message.channel.send(`La BAGARRE ! \n <@${first}> contre <@${second}> ça va faire mal !`);
+        message.channel.send(`La BAGARRE ! \n ${first} contre ${second} ça va faire mal !`);
         console.log("joueur : " + b);
         console.log("attaque : " + c);
         if (b === 2) {
-            message.channel.send(`<@${second}> à gagné la bagarre après avoir ` + bd.attaque[c] + `<@${first}> !`);
+            message.channel.send(`${second} à gagné la bagarre après avoir ` + bd.attaque[c] + `${first} !`);
         }
         else {
-            message.channel.send(`<@${first}> à gagné la bagarre après avoir ` + bd.attaque[c] + `<@${second}> !`);
+            message.channel.send(`${first} à gagné la bagarre après avoir ` + bd.attaque[c] + `${second} !`);
         }
     }
 });
-bot.on("message", async message => {
+client.on("messageCreate", async (message) => {
     if (message.content.startsWith(prefix + "MELER")) {
-        const [first, second, trois, quatre] = message.mentions.users.keyArray();
+        const mentions = message.mentions.users;
+        const [first, second, trois, quatre] = mentions.values();
         let b = Math.floor(Math.random() * (4 + 1));
         let c = Math.floor(Math.random() * (5));
         if (!first || !second || !trois || !quatre)
             return message.channel.send('Vous devez mentionner 4 utilisateurs différents !');
-        message.channel.send(`La BAGARRE EN FOLIE ! \n La mélé comprend <@${first}>, <@${second}>, <@${trois}> <@${quatre}> ça va faire mal !`);
+        message.channel.send(`La BAGARRE EN FOLIE ! \n La mélé comprend ${first}, ${second}, ${trois} ${quatre} ça va faire mal !`);
         console.log(b);
         if (b === 1) {
-            message.channel.send(`<@${first}> à gagné la bagarre après avoir ` + bd.attaque[c] + `<@${second}>, <@${trois}> et <@${quatre}> !`);
+            message.channel.send(`${first} à gagné la bagarre après avoir ` + bd.attaque[c] + `${second}, ${trois} et ${quatre} !`);
         }
         else if (b === 2) {
-            message.channel.send(`<@${second}> à gagné la bagarre après avoir ` + bd.attaque[c] + `<@${first}>, <@${trois}> et <@${quatre}> !`);
+            message.channel.send(`${second} à gagné la bagarre après avoir ` + bd.attaque[c] + `${first}, ${trois} et ${quatre} !`);
         }
         else if (b === 3) {
-            message.channel.send(`<@${trois}> à gagné la bagarre après avoir ` + bd.attaque[c] + `<@${first}>, <@${second}> et <@${quatre}> !`);
+            message.channel.send(`${trois} à gagné la bagarre après avoir ` + bd.attaque[c] + `${first}, ${second} et ${quatre} !`);
         }
         else {
-            message.channel.send(`<@${quatre}> à gagné la bagarre après avoir ` + bd.attaque[c] + `<@${first}>, <@${second}> et <@${trois}> !`);
+            message.channel.send(`${quatre} à gagné la bagarre après avoir ` + bd.attaque[c] + `${first}, ${second} et ${trois} !`);
         }
     }
 });
-bot.on("message", async message => {
+client.on("messageCreate", async (message) => {
     if (message.content.startsWith(prefix + "kick")) {
         let member = message.mentions.members.first();
         if (!member) {
@@ -123,7 +228,7 @@ bot.on("message", async message => {
         }
     }
 });
-bot.on("message", async message => {
+client.on("messageCreate", async (message) => {
     if (message.content.startsWith(prefix + "ban")) {
         let member = message.mentions.members.first();
         if (!member) {
@@ -137,11 +242,11 @@ bot.on("message", async message => {
         }
     }
 });
-bot.on("message", async message => {
+client.on("messageCreate", async (message) => {
     if (message.content === prefix + "help") {
         //const myObj = JSON.parse('{ "help": "Afficher les commandes du bot","info": "Des infos sur le bot","role": "Pour la fenêtre des roles","bagarre": "Pour faire la baston !","meler": "Pour une giga baston !","Judas Priest": "Pour avoir des info sur les Judas Priest","Glenn tipton": "Surprise !","kick": "Pour kick un utilisateur","ban": "Pour bannir un utilisateur"}');
         //console.log(myObj);
-        const exampleEmbed = new Discord.MessageEmbed()
+        const exampleEmbed = new EmbedBuilder ()
             .setColor(0xFF0000)
             .setTitle('Aide du bot')
             .setDescription("Commande Utile du bot")
@@ -156,11 +261,11 @@ bot.on("message", async message => {
             .addFields({ name: "Glenn tipton",value: bd.Commande['Glenn tipton'], inline: true })
             .addFields({ name: "Actu",value: bd.Commande.Actu, inline: true })
             .setTimestamp()
-        message.channel.send(exampleEmbed);
+        message.channel.send({ embeds: [exampleEmbed] });
     }
 });
 
-bot.on("message", async message => {
+client.on("messageCreate", async (message) => {
     if (message.content === prefix + "role") {
         if (message.author.bot) return false;
         const Role1 = message.guild.roles.cache.get("788801741511852042");
@@ -171,10 +276,10 @@ bot.on("message", async message => {
         const Role6 = message.guild.roles.cache.get("788801808025387019");
         const Role7 = message.guild.roles.cache.get("788849758365155378");
         const Filter = (reaction, user) => user.id == message.author.id;
-        const Embed = new Discord.MessageEmbed()
-            .setTitle("Choisie ton role")
-            .setDescription("🎹 = piano \n" + "🎸 = instrument à corde\n" + "🎺 = instrument à vent\n" + "🥁 = Percution\n" + "🎧 = MAO\n" + "🎤 = Voix\n" + "🎼 = j'aime tout")
-        const reactionMessage = await message.channel.send(Embed);
+        const Embed = new EmbedBuilder()
+            .setTitle("Choisis ton rôle")
+            .setDescription("🎹 = piano \n" + "🎸 = instrument à corde\n" + "🎺 = instrument à vent\n" + "🥁 = Percussion\n" + "🎧 = MAO\n" + "🎤 = Voix\n" + "🎼 = j'aime tout")
+        const reactionMessage = await message.channel.send({ embeds: [Embed] });
         await reactionMessage.react("🎹");
         await reactionMessage.react("🎸");
         await reactionMessage.react("🎺");
@@ -183,48 +288,46 @@ bot.on("message", async message => {
         await reactionMessage.react("🎤");
         await reactionMessage.react("🎼");
 
-        reactionMessage.awaitReactions(Filter, { max: 1, time: 30000, errors: ["time"] }).then(collected => {
-            const reaction = collected.first();
+        const collector = reactionMessage.createReactionCollector({ filter: Filter, time: 30000, errors: ["time"] });
 
+        collector.on("collect", (reaction, user) => {
             switch (reaction.emoji.name) {
                 case "🎹":
-                    if (message.member.roles.cache.has(Role1.id)) { return message.channel.send("Vous avez déjà ce role.") };
-                    message.member.roles.add(Role1).then(message.channel.send("Role ajouté !"));
+                    if (message.member.roles.cache.has(Role1.id)) { return message.channel.send("Vous avez déjà ce rôle.") };
+                    message.member.roles.add(Role1).then(console.log("Rôle ajouté !"));
                     break;
                 case "🎸":
-                    if (message.member.roles.cache.has(Role2.id)) { return message.channel.send("Vous avez déjà ce role.") };
-                    message.member.roles.add(Role2).then(message.channel.send("Role ajouté !"));
+                    if (message.member.roles.cache.has(Role2.id)) { return message.channel.send("Vous avez déjà ce rôle.") };
+                    message.member.roles.add(Role2).then(console.log("Rôle ajouté !"));
                     break;
                 case "🎺":
-                    if (message.member.roles.cache.has(Role3.id)) { return message.channel.send("Vous avez déjà ce role.") };
-                    message.member.roles.add(Role3).then(message.channel.send("Role ajouté !"));
+                    if (message.member.roles.cache.has(Role3.id)) { return message.channel.send("Vous avez déjà ce rôle.") };
+                    message.member.roles.add(Role3).then(console.log("Rôle ajouté !"));
                     break;
                 case "🥁":
-                    if (message.member.roles.cache.has(Role4.id)) { return message.channel.send("Vous avez déjà ce role.") };
-                    message.member.roles.add(Role4).then(message.channel.send("Role ajouté !"));
-                    break;
+                    if (message.member.roles.cache.has(Role4.id)) { return message.channel.send("Vous avez déjà ce rôle.") };
+                    message.member.roles.add(Role4).then(console.log("Rôle ajouté !"));
                 case "🎧":
-                    if (message.member.roles.cache.has(Role5.id)) { return message.channel.send("Vous avez déjà ce role.") };
-                    message.member.roles.add(Role5).then(message.channel.send("Role ajouté !"));
+                    if (message.member.roles.cache.has(Role5.id)) { return message.channel.send("Vous avez déjà ce rôle.") };
+                    message.member.roles.add(Role5).then(console.log("Rôle ajouté !"));
                     break;
                 case "🎤":
-                    if (message.member.roles.cache.has(Role6.id)) { return message.channel.send("Vous avez déjà ce role.") };
-                    message.member.roles.add(Role6).then(message.channel.send("Role ajouté !"));
+                    if (message.member.roles.cache.has(Role6.id)) { return message.channel.send("Vous avez déjà ce rôle.") };
+                    message.member.roles.add(Role6).then(console.log("Rôle ajouté !"));
                     break;
                 case "🎼":
-                    if (message.member.roles.cache.has(Role7.id)) { return message.channel.send("Vous avez déjà ce role.") };
-                    message.member.roles.add(Role7).then(message.channel.send("Role ajouté !"));
+                    if (message.member.roles.cache.has(Role7.id)) { return message.channel.send("Vous avez déjà ce rôle.") };
+                    message.member.roles.add(Role7).then(console.log("Rôle ajouté !"));
                     break;
             }
-        })
+        });
     }
-
 });
 const userMap = new Map();
 const LIMIT = 3;
 const TIMEOUT = 5000;
 const DIFF = 1000;
-bot.on("message", async message => {
+client.on("messageCreate", async (message) => {
     if (message.author.bot) return false;
     if (userMap.has(message.author.id)) {
         const userData = userMap.get(message.author.id);
@@ -267,4 +370,4 @@ bot.on("message", async message => {
 });
 
 //bot.login(token.token);
-bot.login(process.env.token);
+client.login(process.env.token);
