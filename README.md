@@ -17,8 +17,10 @@ If you want add Glenn Tipton bot on your server you can folow this link : [Glenn
 5. Do npm install in project folder
 
 1. Execute in directory of project :
+
 **if you put your token environement variable**
 >- node main.js
+
 **if you use the .env file**
 >- npm start
 
